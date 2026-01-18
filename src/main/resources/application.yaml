@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: ticket-backend
+
+  datasource:
+    url: jdbc:postgresql://ep-sparkling-wildflower-ahrps1o8-pooler.c-3.us-east-1.aws.neon.tech/neondb
+    username: neondb_owner
+    password: npg_1znNkajWE6dP
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    profiles:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+jwt:
+  secret: QFKQTEDCgpj2aNBKVTOoQ+yg93aykM+Xp0bYwc6nsWw=
+  expiration: 86400000 # un dia
+  refresh-token:
+    expiration: 604800000 # una semana dia
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+
