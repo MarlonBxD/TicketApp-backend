@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -97,7 +98,7 @@ public class TicketController {
     })
     @PostMapping
     public ResponseEntity<DefaultResponse<Ticket>> create(
-            @RequestBody TicketRequest request
+            @Valid @RequestBody TicketRequest request
     ) {
         Ticket ticket = ticketService.save(request);
 
@@ -117,7 +118,7 @@ public class TicketController {
             @ApiResponse(responseCode = "200", description = "Ticket actualizado"),
             @ApiResponse(responseCode = "404", description = "Ticket no encontrado")
     })
-    @PutMapping("/{id}")
+    @PutMapping("update/{id}")
     public ResponseEntity<DefaultResponse<Ticket>> update(
             @PathVariable UUID id,
             @RequestBody TicketRequest request

@@ -35,8 +35,10 @@ public class TicketSpecification {
     public static Specification<Ticket> createdBy(UUID createdBy) {
         return createdBy == null
                 ? null
-                : (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("createdBy"), createdBy);
+                : (root, query, cb) ->
+                cb.equal(root.get("createdBy").get("id"), createdBy);
     }
+
     public static Specification<Ticket> assignedToId(UUID assignedTo) {
         return assignedTo == null
                 ? null

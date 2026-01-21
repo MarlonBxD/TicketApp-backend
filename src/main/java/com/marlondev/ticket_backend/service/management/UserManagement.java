@@ -1,16 +1,27 @@
 package com.marlondev.ticket_backend.service.management;
 
 import com.marlondev.ticket_backend.exception.ResourceNotFoundException;
+import com.marlondev.ticket_backend.infrastructure.criteriafilter.UserSearchCriteria;
 import com.marlondev.ticket_backend.infrastructure.dto.request.LoginRequest;
 import com.marlondev.ticket_backend.infrastructure.dto.request.RegisterRequest;
+import com.marlondev.ticket_backend.infrastructure.dto.request.UserRequest;
 import com.marlondev.ticket_backend.infrastructure.dto.response.TokenResponse;
 import com.marlondev.ticket_backend.infrastructure.entity.Role;
+import com.marlondev.ticket_backend.infrastructure.entity.Ticket;
 import com.marlondev.ticket_backend.infrastructure.entity.User;
+import com.marlondev.ticket_backend.infrastructure.repository.TicketRepository;
+import com.marlondev.ticket_backend.infrastructure.repository.TicketSpecification;
 import com.marlondev.ticket_backend.infrastructure.repository.UserRepository;
+import com.marlondev.ticket_backend.infrastructure.repository.UserSpecification;
 import com.marlondev.ticket_backend.service.JwtService;
 import com.marlondev.ticket_backend.service.authService;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +40,26 @@ public class UserManagement implements authService {
         private final PasswordEncoder passwordEncoder;
         private final JwtService jwtService;
         private final org.springframework.security.authentication.AuthenticationManager authenticationManager;
+
+        private final UserRepository repository;
+
+        @Override
+        public Page<User> findAll(Integer page,
+                                  Integer pageSize,
+                                  String sortBy,
+                                  Sort.Direction sortDirection,
+                                  UserSearchCriteria criteria) {
+
+                Sort sort = (sortBy == null || sortBy.isBlank())
+                        ? Sort.unsorted()
+                        : Sort.by(sortDirection != null ? sortDirection : Sort.Direction.ASC,
+                        sortBy.split(","));
+
+                Pageable pageable = PageRequest.of(page, pageSize, sort);
+                Specification<User> spec = UserSpecification.buildSpecification(criteria);
+
+                return repository.findAll(spec, pageable);
+        }
 
         @Override
         public TokenResponse registerUser(RegisterRequest request) {
@@ -58,9 +89,8 @@ public class UserManagement implements authService {
                 TokenResponse tokenResponse;
                 return tokenResponse = TokenResponse.builder()
                         .httpCode(HttpStatus.CREATED.value())
+                        .user(convertUserToUserRequest(sabeUser))
                         .type("Bearer")
-                        .firstName(sabeUser.getFirstName())
-                        .lastName(sabeUser.getLastName())
                         .token(jwtToken)
                         .refreshToken(refreshToken).build();
         }
@@ -79,27 +109,72 @@ public class UserManagement implements authService {
                 String refreshToken = jwtService.generateRefreshToken(user);
 
                 return TokenResponse.builder()
+                                .httpCode(HttpStatus.OK.value())
+                                .user(convertUserToUserRequest(user))
                                 .token(jwtToken)
                                 .refreshToken(refreshToken)
-                                .httpCode(HttpStatus.OK.value())
                                 .type("Bearer")
-                                .firstName(user.getFirstName())
-                                .lastName(user.getLastName())
                                 .build();
         }
 
         @Override
         public User updateUser(UUID id, RegisterRequest request) {
-                return null;
+
+                var user = userRepository.findById(id)
+                        .orElseThrow(()-> new ResourceNotFoundException("User not found"));
+                user.setFirstName(request.getFirstName());
+                user.setLastName(request.getLastName());
+                user.setEmail(request.getEmail());
+                user.setPhone(request.getPhone());
+                user.setUsername(request.getUsername());
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+                user.setActive(request.getActive());
+                user.setUpdatedAt(java.time.LocalDateTime.now());
+                return repository.save(user);
         }
 
         @Override
         public void deleteUser(UUID id) {
-
+                User user = userRepository.findById(id)
+                        .orElseThrow(()-> new ResourceNotFoundException("User not found"));
+                repository.delete(user);
         }
 
         @Override
         public User updateUserRoles(UUID id, Set<Role> roles) {
-                return null;
+               var user = userRepository.findById(id)
+                        .orElseThrow(()-> new ResourceNotFoundException("User not found"));
+                user.setRoles(roles);
+                return repository.save(user);
+        }
+
+        @Override
+        public User findById(UUID id) {
+                return userRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        }
+
+        @Override
+        public User toggleUserStatus(UUID id, Boolean active) {
+                User user = userRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+                user.setActive(active);
+                user.setUpdatedAt(java.time.LocalDateTime.now());
+
+                return repository.save(user);
+        }
+
+        private UserRequest convertUserToUserRequest(User user){
+                UserRequest userRequest = new UserRequest();
+                userRequest.setId(user.getId());
+                userRequest.setFirstName(user.getFirstName());
+                userRequest.setLastName(user.getLastName());
+                userRequest.setEmail(user.getEmail());
+                userRequest.setPhone(user.getPhone());
+                userRequest.setUsername(user.getUsername());
+                userRequest.setRoles(user.getRoles());
+                return userRequest;
+
         }
 }

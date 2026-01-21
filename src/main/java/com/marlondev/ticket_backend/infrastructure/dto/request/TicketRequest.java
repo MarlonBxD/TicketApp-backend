@@ -1,6 +1,6 @@
 package com.marlondev.ticket_backend.infrastructure.dto.request;
 
-import com.marlondev.ticket_backend.infrastructure.entity.TicketStatus;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -27,9 +27,6 @@ public class TicketRequest {
     @Size(max = 20)
     @NotNull(message = "el estado es obligatorio")
     private String status;
-
-    @NotNull(message = "el usuario es obligatorio")
-    private UUID createdById;
 
     private UUID assignedToId;
 }

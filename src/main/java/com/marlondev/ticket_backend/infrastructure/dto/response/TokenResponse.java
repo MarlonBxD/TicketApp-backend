@@ -1,5 +1,6 @@
 package com.marlondev.ticket_backend.infrastructure.dto.response;
 
+import com.marlondev.ticket_backend.infrastructure.dto.request.UserRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +26,5 @@ public class TokenResponse {
     @Schema(description = "Token de refresco", example = "eyJhbGciOiJIUzI1NiJ9...")
     private String refreshToken;
 
-    private String firstName;
-    private String lastName;
+    private UserRequest user;
 }

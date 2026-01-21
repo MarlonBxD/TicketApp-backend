@@ -1,26 +1,25 @@
 package com.marlondev.ticket_backend.infrastructure.dto.request;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import com.marlondev.ticket_backend.infrastructure.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Modelo para registro de nuevo usuario")
-public class RegisterRequest {
+@NoArgsConstructor
+public class UserRequest {
+    private UUID id;
     private String username;
     private String email;
-    private String password;
     private String firstName;
     private String lastName;
     private String phone;
     private Boolean active;
-    private Instant updatedAt;
+    private Set<Role> roles;
 }

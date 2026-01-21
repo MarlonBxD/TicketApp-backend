@@ -4,6 +4,7 @@ import com.marlondev.ticket_backend.exception.ResourceNotFoundException;
 import com.marlondev.ticket_backend.infrastructure.criteriafilter.TicketSearchCriteria;
 import com.marlondev.ticket_backend.infrastructure.dto.request.TicketRequest;
 import com.marlondev.ticket_backend.infrastructure.entity.Ticket;
+import com.marlondev.ticket_backend.infrastructure.entity.TicketStatus;
 import com.marlondev.ticket_backend.infrastructure.entity.User;
 import com.marlondev.ticket_backend.infrastructure.repository.TicketRepository;
 import com.marlondev.ticket_backend.infrastructure.repository.TicketSpecification;
@@ -16,9 +17,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -49,28 +52,32 @@ public class TicketManagement implements TicketService {
         @Override
         public Ticket findById(UUID id) {
                 return ticketRepository.findById(id)
-                                .orElseThrow(() -> new EntityNotFoundException("Ticket"));
+                                .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + id ));
         }
 
         @Override
         public Ticket save(TicketRequest request) {
-                User createdBy = userRepository.findById(request.getCreatedById())
-                                .orElseThrow(() -> new ResourceNotFoundException("Creator user not found"));
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                User createdBy = userRepository.findByUsername(username)
+                        .orElseThrow(() -> new ResourceNotFoundException("Creator user not found"));
 
                 User assignedTo = null;
                 if (request.getAssignedToId() != null) {
                         assignedTo = userRepository.findById(request.getAssignedToId())
-                                        .orElseThrow(() -> new ResourceNotFoundException("Assigned user not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Assigned user not found"));
+                }
+                if (!Objects.equals(request.getStatus(), TicketStatus.CREATE.toString())) {
+                        throw new IllegalStateException("El ticket debe estar en estado CREATE");
                 }
 
                 Ticket ticket = Ticket.builder()
-                                .title(request.getTitle())
-                                .description(request.getDescription())
-                                .status(request.getStatus())
-                                .createdBy(createdBy)
-                                .assignedTo(assignedTo)
-                                .createdAt(LocalDateTime.now())
-                                .build();
+                        .title(request.getTitle())
+                        .description(request.getDescription())
+                        .status(request.getStatus())
+                        .createdBy(createdBy)
+                        .assignedTo(assignedTo)
+                        .createdAt(LocalDateTime.now())
+                        .build();
 
                 return ticketRepository.save(ticket);
         }
@@ -78,22 +85,25 @@ public class TicketManagement implements TicketService {
         @Override
         public Ticket update(UUID id, TicketRequest request) {
                 Ticket ticket = ticketRepository.findById(id)
-                                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
-                ticket.setTitle(request.getTitle());
-                ticket.setDescription(request.getDescription());
-                ticket.setStatus(request.getStatus());
+                if (request.getTitle() != null && !request.getTitle().trim().isEmpty()) {
+                        ticket.setTitle(request.getTitle());
+                }
+
+                if (request.getDescription() != null) {
+                        ticket.setDescription(request.getDescription());
+                }
+
+                if (request.getStatus() != null && !request.getStatus().trim().isEmpty()) {
+                        ticket.setStatus(request.getStatus());
+                }
 
                 if (request.getAssignedToId() != null) {
                         User assignedTo = userRepository.findById(request.getAssignedToId())
-                                        .orElseThrow(() -> new ResourceNotFoundException("Assigned user not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Assigned user not found"));
                         ticket.setAssignedTo(assignedTo);
-                } else {
-                        ticket.setAssignedTo(null);
                 }
-
-                // Don't update createdBy or createdAt typically, but if needed:
-                // if (request.getCreatedById() != null) { ... }
 
                 ticket.setUpdatedAt(LocalDateTime.now());
                 return ticketRepository.save(ticket);
