@@ -1,61 +1,59 @@
-FROM gradle:8.8.0-jdk-21-and-22 AS build
+FROM gradle:8.14.3-jdk21-ubi-minimal AS build
 WORKDIR /home/gradle/
+
+ARG AZURE_ARTIFACTS_USERNAME
+ARG AZURE_ARTIFACTS_PAT
+
+COPY gradlew settings.gradle build.gradle ./
+COPY gradle/wrapper ./gradle/wrapper
+
 
 COPY build.gradle settings.gradle gradlew /home/gradle/
 COPY src/main/resources/application*.yaml /home/gradle/
 COPY src /home/gradle/src
-COPY sic-run.sh /home/gradle/
+COPY ticket-run.sh /home/gradle/
+RUN chmod +x ./gradlew
 
-RUN mkdir /usr/local/jvm
-RUN wget https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
-RUN tar zxf openjdk-21.0.2_linux-x64_bin.tar.gz --directory /usr/local/jvm/
+RUN ./gradlew --no-daemon --refresh-dependencies
+RUN ./gradlew clean build -x test --no-daemon --stacktrace --warning-mode all
 
-
-
-RUN gradle --refresh-dependencies --no-daemon
-RUN gradle clean build -x test
-
-FROM debian:stable-slim
-
+FROM eclipse-temurin:21-jre
+ARG BUILD_VERSION
+ARG BINARY_NAME
 ENV TZ=America/Bogota
-ENV VAULT_TOKEN=root
+ENV VERSION=$BUILD_VERSION
+ENV BINARY_NAME=$BINARY_NAME
+
 
 RUN apt-get update && apt-get install -y libc6
 
-RUN groupadd -r sic && useradd -r -g sic -m -d /etc/sic  sic
+RUN groupadd -r singularit && useradd -r -g singularit -m -d /etc/singularit  singularit
 RUN set -ex; \
-    mkdir -p /etc/sic/config; \
-    mkdir /etc/sic/logs; \
-    touch /etc/sic/logs/sic.log; \
-    chown -R sic:sic /etc/sic; \
-    chmod 754 -R /etc/sic; \
-    mkdir -p /usr/local/jvm/java;
+    mkdir -p /etc/singularit/config; \
+    mkdir /etc/singularit/logs; \
+    touch /etc/singularit/logs/singularit.log; \
+    chown -R singularit:singularit /etc/singularit; \
+    chmod 754 -R /etc/singularit;
 
-COPY --from=build /home/gradle/*.yaml /etc/sic/config/
-COPY --from=build /home/gradle/build/libs/TestSic-0.0.1.jar /etc/sic/TestSic-0.0.1.jar
-COPY --from=build /home/gradle/sic-run.sh /usr/local/bin
-COPY --from=build  /usr/local/jvm/*  /usr/local/jvm/java
-
-
+COPY --from=build /home/gradle/*.yaml /etc/singularit/config/
+COPY --from=build /home/gradle/build/libs/${BINARY_NAME}-${VERSION}.jar /etc/singularit/${BINARY_NAME}-${VERSION}.jar
+COPY --from=build /home/gradle/singularit-run.sh /usr/local/bin
 
 
 RUN set -ex; \
-    chown -R sic:sic /etc/sic; \
-    chmod a+x /usr/local/bin/sic-run.sh
+    chown -R singularit:singularit /etc/singularit; \
+    chmod a+x /usr/local/bin/singularit-run.sh
 
-
-
-ENV SPRING_CONFIG_LOCATION=/etc/sic/config/
-ENV CLASSPATH=/etc/sic
+ENV SPRING_CONFIG_LOCATION=/etc/singularit/config/
+ENV CLASSPATH=/etc/singularit
 ENV SPRING_CONFIG_NAME=application
-ENV JAVA_HOME=/usr/local/jvm/java
 ENV PATH=$PATH:${JAVA_HOME}/bin
 
 
 
-USER sic:sic
-WORKDIR /etc/sic
+USER singularit:singularit
+WORKDIR /etc/singularit
 
-ENTRYPOINT ["/bin/bash", "-c", "/usr/local/bin/sic-run.sh ticket-backend-0.0.1.jar"]
+ENTRYPOINT ["/bin/bash", "-c", "/usr/local/bin/singularit-run.sh ${BINARY_NAME}-${VERSION}.jar"]
 
 EXPOSE 8080
