@@ -1,59 +1,33 @@
-FROM gradle:8.14.3-jdk21-ubi-minimal AS build
-WORKDIR /home/gradle/
+# Etapa 1: Build
+FROM gradle:8.5-jdk21 AS build
+WORKDIR /app
 
-ARG AZURE_ARTIFACTS_USERNAME
-ARG AZURE_ARTIFACTS_PAT
+# Copiar archivos de gradle
+COPY build.gradle settings.gradle ./
+COPY gradle ./gradle
+COPY gradlew ./
 
-COPY gradlew settings.gradle build.gradle ./
-COPY gradle/wrapper ./gradle/wrapper
+# Descargar dependencias (cache layer)
+RUN ./gradlew dependencies --no-daemon
 
+# Copiar código fuente
+COPY src ./src
 
-COPY build.gradle settings.gradle gradlew /home/gradle/
-COPY src/main/resources/application*.yaml /home/gradle/
-COPY src /home/gradle/src
-COPY ticket-run.sh /home/gradle/
-RUN chmod +x ./gradlew
+# Construir la aplicación
+RUN ./gradlew bootJar -x test --no-daemon
 
-RUN ./gradlew --no-daemon --refresh-dependencies
-RUN ./gradlew clean build -x test --no-daemon --stacktrace --warning-mode all
+# Etapa 2: Runtime
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
 
-FROM eclipse-temurin:21-jre
-ARG BUILD_VERSION
-ARG BINARY_NAME
-ENV TZ=America/Bogota
-ENV VERSION=$BUILD_VERSION
-ENV BINARY_NAME=$BINARY_NAME
+# Copiar el JAR desde la etapa de build
+COPY --from=build /app/build/libs/*.jar app.jar
 
-
-RUN apt-get update && apt-get install -y libc6
-
-RUN groupadd -r singularit && useradd -r -g singularit -m -d /etc/singularit  singularit
-RUN set -ex; \
-    mkdir -p /etc/singularit/config; \
-    mkdir /etc/singularit/logs; \
-    touch /etc/singularit/logs/singularit.log; \
-    chown -R singularit:singularit /etc/singularit; \
-    chmod 754 -R /etc/singularit;
-
-COPY --from=build /home/gradle/*.yaml /etc/singularit/config/
-COPY --from=build /home/gradle/build/libs/${BINARY_NAME}-${VERSION}.jar /etc/singularit/${BINARY_NAME}-${VERSION}.jar
-COPY --from=build /home/gradle/ticket-run.sh /usr/local/bin
-
-
-RUN set -ex; \
-    chown -R singularit:singularit /etc/singularit; \
-    chmod a+x /usr/local/bin/singularit-run.sh
-
-ENV SPRING_CONFIG_LOCATION=/etc/singularit/config/
-ENV CLASSPATH=/etc/singularit
-ENV SPRING_CONFIG_NAME=application
-ENV PATH=$PATH:${JAVA_HOME}/bin
-
-
-
-USER singularit:singularit
-WORKDIR /etc/singularit
-
-ENTRYPOINT ["/bin/bash", "-c", "/usr/local/bin/ticket-run.sh ${BINARY_NAME}-${VERSION}.jar"]
-
+# Exponer el puerto
 EXPOSE 8080
+
+# Variables de entorno por defecto
+ENV JAVA_OPTS="-Xmx512m -Xms256m"
+
+# Comando de ejecución
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar"]
