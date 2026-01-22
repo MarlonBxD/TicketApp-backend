@@ -77,7 +77,6 @@ public class JwtService {
     }
 
     public String buildToken(final User user, final long expiration) {
-        // 1. Manejo seguro de roles
         var roles = (user.getRoles() != null)
                 ? user.getRoles().stream().map(Role::getName).toList()
                 : java.util.Collections.emptyList();
