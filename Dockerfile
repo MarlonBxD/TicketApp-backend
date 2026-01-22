@@ -54,6 +54,6 @@ ENV PATH=$PATH:${JAVA_HOME}/bin
 USER singularit:singularit
 WORKDIR /etc/singularit
 
-ENTRYPOINT ["/bin/bash", "-c", "/usr/local/bin/singularit-run.sh ${BINARY_NAME}-${VERSION}.jar"]
+ENTRYPOINT ["/bin/bash", "-c", "/usr/local/bin/ticket-run.sh ${BINARY_NAME}-${VERSION}.jar"]
 
 EXPOSE 8080
