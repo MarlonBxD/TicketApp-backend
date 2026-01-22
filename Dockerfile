@@ -37,7 +37,7 @@ RUN set -ex; \
 
 COPY --from=build /home/gradle/*.yaml /etc/singularit/config/
 COPY --from=build /home/gradle/build/libs/${BINARY_NAME}-${VERSION}.jar /etc/singularit/${BINARY_NAME}-${VERSION}.jar
-COPY --from=build /home/gradle/singularit-run.sh /usr/local/bin
+COPY --from=build /home/gradle/ticket-run.sh /usr/local/bin
 
 
 RUN set -ex; \
