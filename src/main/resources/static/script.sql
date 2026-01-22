@@ -70,6 +70,11 @@ CREATE INDEX idx_tickets_status_created_at ON tickets(status, created_at DESC);
 CREATE INDEX idx_tickets_status_assigned_to ON tickets(status, assigned_to);
 CREATE INDEX idx_tickets_assigned_to_status ON tickets(assigned_to, status);
 
--- Índice de texto completo (opcional)
 CREATE INDEX idx_tickets_full_text_search ON tickets
     USING gin(to_tsvector('spanish', coalesce(title, '') || ' ' || coalesce(description, '')));
+
+
+INSERT INTO roles (name, description) VALUES
+                                          ('USER', 'Usuario estándar que puede crear y ver sus propios tickets'),
+                                          ('ADMIN', 'Administrador con control total sobre usuarios, roles y tickets'),
+                                          ('SUPPORT', 'Personal técnico encargado de resolver los tickets asignados');

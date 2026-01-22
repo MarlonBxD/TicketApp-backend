@@ -8,10 +8,12 @@ import com.marlondev.ticket_backend.infrastructure.dto.request.UserRequest;
 import com.marlondev.ticket_backend.infrastructure.dto.response.TokenResponse;
 import com.marlondev.ticket_backend.infrastructure.entity.Role;
 import com.marlondev.ticket_backend.infrastructure.entity.User;
+import com.marlondev.ticket_backend.infrastructure.repository.RoleRepository;
 import com.marlondev.ticket_backend.infrastructure.repository.UserRepository;
 import com.marlondev.ticket_backend.infrastructure.repository.UserSpecification;
 import com.marlondev.ticket_backend.service.JwtService;
 import com.marlondev.ticket_backend.service.AuthService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -37,6 +39,7 @@ public class UserManagement implements AuthService {
         private final PasswordEncoder passwordEncoder;
         private final JwtService jwtService;
         private final org.springframework.security.authentication.AuthenticationManager authenticationManager;
+        private final RoleRepository roleRepository;
 
         private final UserRepository repository;
 
@@ -59,37 +62,38 @@ public class UserManagement implements AuthService {
         }
 
         @Override
+        @Transactional
         public TokenResponse registerUser(RegisterRequest request) {
-
-                if (userRepository.existsByUsername((request.getUsername()))) {
-                        throw new ResourceNotFoundException(
-                                        "Username already exists: " + request.getUsername());
+                if (userRepository.existsByUsername(request.getUsername())) {
+                        throw new RuntimeException("Username already exists");
                 }
-                if (userRepository.existsByEmail((request.getEmail()))) {
-                        throw new ResourceNotFoundException(
-                                        "Email already exists: " + request.getEmail());
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        throw new RuntimeException("Email already exists");
                 }
 
                 var user = User.builder()
-                                .username(request.getUsername())
-                                .email(request.getEmail())
-                                .lastName(request.getLastName())
-                                .firstName(request.getFirstName())
-                                .phone(request.getPhone())
-                                .password(passwordEncoder.encode(request.getPassword()))
-                                .build();
+                        .username(request.getUsername())
+                        .email(request.getEmail())
+                        .lastName(request.getLastName())
+                        .firstName(request.getFirstName())
+                        .phone(request.getPhone())
+                        .password(passwordEncoder.encode(request.getPassword()))
+                        .active(true)
+                        .roles(Set.of(roleRepository.findByName("USER")))
+                        .build();
 
-                user.setActive(true);
-                var sabeUser = userRepository.save(user);
-                var jwtToken = jwtService.generateToken(sabeUser);
-                var refreshToken = jwtService.generateRefreshToken(sabeUser);
-                TokenResponse tokenResponse;
-                return tokenResponse = TokenResponse.builder()
+                var savedUser = userRepository.save(user);
+
+                var jwtToken = jwtService.generateToken(savedUser);
+                var refreshToken = jwtService.generateRefreshToken(savedUser);
+
+                return TokenResponse.builder()
                         .httpCode(HttpStatus.CREATED.value())
-                        .user(convertUserToUserRequest(sabeUser))
+                        .user(convertUserToUserRequest(savedUser))
                         .type("Bearer")
                         .token(jwtToken)
-                        .refreshToken(refreshToken).build();
+                        .refreshToken(refreshToken)
+                        .build();
         }
 
         @Override

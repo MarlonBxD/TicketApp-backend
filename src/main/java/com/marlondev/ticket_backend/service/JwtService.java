@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -76,17 +77,21 @@ public class JwtService {
     }
 
     public String buildToken(final User user, final long expiration) {
-        var roles = user.getRoles() != null
+        // 1. Manejo seguro de roles
+        var roles = (user.getRoles() != null)
                 ? user.getRoles().stream().map(Role::getName).toList()
                 : java.util.Collections.emptyList();
 
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", roles);
+        extraClaims.put("firstName", user.getFirstName() != null ? user.getFirstName() : "");
+        extraClaims.put("lastName", user.getLastName() != null ? user.getLastName() : "");
+
+        String userId = (user.getId() != null) ? user.getId().toString() : "new-user";
+
         return Jwts.builder()
-                .id(user.getId().toString())
-                .claims(Map.of(
-                        "roles", roles,
-                        "firstName", user.getFirstName(),
-                        "lastName", user.getLastName()
-                ))
+                .id(userId)
+                .claims(extraClaims)
                 .subject(user.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))

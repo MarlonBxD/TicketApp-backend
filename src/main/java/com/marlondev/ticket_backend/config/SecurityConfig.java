@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -41,14 +42,14 @@ public class SecurityConfig {
                         .cors(Customizer.withDefaults())
                         .csrf(AbstractHttpConfigurer::disable)
                         .authorizeHttpRequests(auth -> auth
+                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                 .requestMatchers(
-                                        "/api/v1/auth/**",
+                                        "/auth/**",
                                         "/v3/**",
                                         "/swagger-ui/**",
                                         "/swagger-ui.html",
                                         "/webjars/**"
-                                )
-                                .permitAll()
+                                ).permitAll()
                                 .anyRequest().authenticated()
                         )
                         .sessionManagement(session -> session
@@ -66,19 +67,18 @@ public class SecurityConfig {
 
                 config.setAllowedOrigins(List.of(
                         "https://ticketsap.netlify.app",
-                        "http://localhost:5173",
-                        "http://192.168.1.50:5173"
+                        "http://localhost:5173"
                 ));
-                config.setAllowedMethods(List.of(
-                                "GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 config.setAllowedHeaders(List.of("*"));
+                config.setExposedHeaders(List.of("Authorization"));
                 config.setAllowCredentials(true);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", config);
-
                 return source;
         }
+
 
         @Bean
         public AuthenticationProvider authenticationProvider() {

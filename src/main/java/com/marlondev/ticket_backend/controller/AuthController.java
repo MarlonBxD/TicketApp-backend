@@ -35,14 +35,14 @@ public class AuthController {
     })
     @PostMapping("/register")
     public ResponseEntity<DefaultResponse<TokenResponse>> register(@Valid @RequestBody RegisterRequest request) {
-        //TokenResponse tokenResponse = authService.registerUser(request);
+        TokenResponse tokenResponse = authService.registerUser(request);
 
         DefaultResponse<TokenResponse> response = DefaultResponse.<TokenResponse>builder()
                 .error(false)
                 .message("User registered successfully")
                 .httpStatus(HttpStatus.CREATED)
                 .httpCode(HttpStatus.CREATED.value())
-                .body(null)
+                .body(tokenResponse)
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
