@@ -22,5 +22,5 @@ public class UserSearchCriteria {
     private String lastName;
     private String phone;
     private Boolean active;
-    private Set<Role> roles = new HashSet<>();
+    private Set<Role> roles;
 }
