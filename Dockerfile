@@ -56,6 +56,6 @@ ENV PATH=$PATH:${JAVA_HOME}/bin
 USER sic:sic
 WORKDIR /etc/sic
 
-ENTRYPOINT ["/bin/bash", "-c", "/usr/local/bin/sic-run.sh TestSic-0.0.1.jar"]
+ENTRYPOINT ["/bin/bash", "-c", "/usr/local/bin/sic-run.sh ticket-backend-0.0.1.jar"]
 
 EXPOSE 8080
