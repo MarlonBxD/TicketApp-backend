@@ -4,7 +4,7 @@ import com.marlondev.ticket_backend.infrastructure.dto.request.LoginRequest;
 import com.marlondev.ticket_backend.infrastructure.dto.request.RegisterRequest;
 import com.marlondev.ticket_backend.infrastructure.dto.response.DefaultResponse;
 import com.marlondev.ticket_backend.infrastructure.dto.response.TokenResponse;
-import com.marlondev.ticket_backend.service.authService;
+import com.marlondev.ticket_backend.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,9 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "Autenticación", description = "Endpoints para registro y autenticación de usuarios")
-public class authController {
+public class AuthController {
 
-    private final authService authService;
+    private final AuthService authService;
 
     @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta de usuario y devuelve un token JWT para autenticación inmediata")
     @ApiResponses(value = {

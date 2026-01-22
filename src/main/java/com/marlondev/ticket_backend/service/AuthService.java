@@ -13,7 +13,7 @@ import org.springframework.data.domain.Sort;
 import java.util.Set;
 import java.util.UUID;
 
-public interface authService {
+public interface AuthService {
 
     TokenResponse registerUser(RegisterRequest request);
     TokenResponse login(LoginRequest request);

@@ -7,14 +7,11 @@ import com.marlondev.ticket_backend.infrastructure.dto.request.RegisterRequest;
 import com.marlondev.ticket_backend.infrastructure.dto.request.UserRequest;
 import com.marlondev.ticket_backend.infrastructure.dto.response.TokenResponse;
 import com.marlondev.ticket_backend.infrastructure.entity.Role;
-import com.marlondev.ticket_backend.infrastructure.entity.Ticket;
 import com.marlondev.ticket_backend.infrastructure.entity.User;
-import com.marlondev.ticket_backend.infrastructure.repository.TicketRepository;
-import com.marlondev.ticket_backend.infrastructure.repository.TicketSpecification;
 import com.marlondev.ticket_backend.infrastructure.repository.UserRepository;
 import com.marlondev.ticket_backend.infrastructure.repository.UserSpecification;
 import com.marlondev.ticket_backend.service.JwtService;
-import com.marlondev.ticket_backend.service.authService;
+import com.marlondev.ticket_backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -33,7 +30,7 @@ import java.util.logging.Logger;
 
 @Service
 @RequiredArgsConstructor
-public class UserManagement implements authService {
+public class UserManagement implements AuthService {
 
         private final UserRepository userRepository;
         private final Logger logger = Logger.getLogger(UserManagement.class.getName());

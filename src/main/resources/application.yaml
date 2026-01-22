@@ -3,8 +3,8 @@ spring:
     name: ticket-backend
 
   datasource:
-    url: jdbc:postgresql://ep-sparkling-wildflower-ahrps1o8-pooler.c-3.us-east-1.aws.neon.tech/neondb
-    username: neondb_owner
+    url: ${URL_DATABASE}
+    username: ${USERNAME_DATABASE}
     password: ${PASSWORD_DATABASE}
     driver-class-name: org.postgresql.Driver
 

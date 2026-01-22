@@ -5,7 +5,7 @@ import com.marlondev.ticket_backend.infrastructure.dto.request.RegisterRequest;
 import com.marlondev.ticket_backend.infrastructure.dto.response.DefaultResponse;
 import com.marlondev.ticket_backend.infrastructure.entity.Role;
 import com.marlondev.ticket_backend.infrastructure.entity.User;
-import com.marlondev.ticket_backend.service.authService;
+import com.marlondev.ticket_backend.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,7 +20,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
@@ -33,7 +32,7 @@ import java.util.UUID;
 @SecurityRequirement(name = "bearer-jwt")
 public class UserController {
 
-    private final authService authService;
+    private final AuthService authService;
 
     @GetMapping
     @Operation(
